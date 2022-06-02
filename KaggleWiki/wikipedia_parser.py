@@ -63,7 +63,7 @@ def get_formation(link_bio):
         s = bs.text[first:second].replace('\n', '')
         return convert_formation(re.sub(r'\[*\d*\]', '', s))
     except:
-        print('Error for %s' % link_bio)
+        print(f'Error for {link_bio}')
 
 def get_previous_government_link(browser, link):
     try:
@@ -74,9 +74,21 @@ def get_previous_government_link(browser, link):
     box = browser.find_element_by_xpath('//table[@class="infobox_v2"]')
     browser.execute_script("return arguments[0].scrollIntoView();", box)
     bs = BeautifulSoup(box.get_attribute('innerHTML').strip(), 'lxml')
-    d = dict(set([([k.replace('|','').replace('\n','') for k in e.text.replace('\n\n','|').split('||') if k != ''][0], 
-                 "https://fr.wikipedia.org" + e.find('a')['href']) 
-                for e in bs.find_all('tr') if e.find('img', {'alt':"Précédent"})]))
+    d = dict(
+        {
+            (
+                [
+                    k.replace('|', '').replace('\n', '')
+                    for k in e.text.replace('\n\n', '|').split('||')
+                    if k != ''
+                ][0],
+                "https://fr.wikipedia.org" + e.find('a')['href'],
+            )
+            for e in bs.find_all('tr')
+            if e.find('img', {'alt': "Précédent"})
+        }
+    )
+
     duration = [e.find('td').text.encode().decode('ascii', 'ignore') for e in bs.find_all('tr') if e.find('th', text='Durée')][0]
     return d, duration
 

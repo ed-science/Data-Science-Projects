@@ -50,7 +50,7 @@ def training(people):
     df = pd.DataFrame()
     for p in people:
         l = []
-        for filename in glob.glob('./data/%s/*' % p):
+        for filename in glob.glob(f'./data/{p}/*'):
             image, face_detect = get_detected_faces(filename)
             face_encoding = get_face_encoding(image, face_detect[0])
             l.append(np.append(face_encoding, [p]))
@@ -61,9 +61,9 @@ def training(people):
     # converting labels into int
     le = LabelEncoder()
     y = le.fit_transform(df[128])
-    print("Training for {} classes.".format(len(le.classes_)))
+    print(f"Training for {len(le.classes_)} classes.")
     X = df.drop(128, axis=1)
-    print("Training with {} pictures.".format(len(X)))
+    print(f"Training with {len(X)} pictures.")
 
     # training
     clf = SVC(C=1, kernel='linear', probability=True)
@@ -71,7 +71,7 @@ def training(people):
 
     # dumping model
     fName = "./classifier.pkl"
-    print("Saving classifier to '{}'".format(fName))
+    print(f"Saving classifier to '{fName}'")
     with open(fName, 'wb') as f:
         pickle.dump((le, clf), f)
 
@@ -91,7 +91,7 @@ def predict(filename, le=None, clf=None, verbose=False):
     prediction = []
     # Verbose for debugging
     if verbose:
-        print('{} faces detected.'.format(len(detected_faces)))
+        print(f'{len(detected_faces)} faces detected.')
     img = np.copy(image)
     font = cv2.FONT_HERSHEY_SIMPLEX
     for face_detect in detected_faces:
@@ -115,7 +115,7 @@ def predict(filename, le=None, clf=None, verbose=False):
                                                                               np.argsort(p[0])), 
                                                                           np.sort(p[0])))[::-1]]))
             print('Prediction took {:.2f}s'.format(time.time()-start_time))
-        
+
         cv2.putText(img, y_pred, (face_detect.left(), face_detect.top()-5), font, np.max(img.shape[:2])/1800, (255, 0, 0))
     return img, prediction
 
@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     people = os.listdir(args.training_data)
-    print('{} people will be classified.'.format(len(people)))
+    print(f'{len(people)} people will be classified.')
     if args.mode == 'train':
         training(people)
     elif args.mode == 'test':
@@ -141,5 +141,5 @@ if __name__ == '__main__':
             (le, clf) = pickle.load(f)
         for i, f in enumerate(glob.glob(args.testing_data)):
             img, _ = predict(f, le, clf)
-            cv2.imwrite(args.testing_data + 'test_{}.jpg'.format(i), img)
+            cv2.imwrite(args.testing_data + f'test_{i}.jpg', img)
 

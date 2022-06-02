@@ -7,10 +7,7 @@ import re
 import datetime
 
 def parse_facebook_likes_number(num_likes_string):
-    if num_likes_string[-1] == 'K':
-        thousand = 1000
-    else:
-        thousand = 1
+    thousand = 1000 if num_likes_string[-1] == 'K' else 1
     return float(num_likes_string.replace('K','')) * thousand
 
 def parse_duration(time_string):
@@ -24,26 +21,26 @@ class ImdbMovieContent():
     self.base_url = "http://www.imdb.com"
 
   def get_facebook_likes(self, entity_id):
-    if entity_id.startswith('nm'):
-        url = "https://www.facebook.com/widgets/like.php?width=280&show_faces=1&layout=standard&href=http%3A%2F%2Fwww.imdb.com%2Fname%2F{}%2F&colorscheme=light".format(entity_id)
-    elif entity_id.startswith('tt'):
-        url = "https://www.facebook.com/widgets/like.php?width=280&show_faces=1&layout=standard&href=http%3A%2F%2Fwww.imdb.com%2Ftitle%2F{}%2F&colorscheme=light".format(entity_id)
-    else:
-        url = None
-    time.sleep(random.uniform(0, 0.25)) # randomly snooze a time within [0, 0.4] second
-    try:
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, "lxml")
-        sentence = soup.find_all(id="u_0_2")[0].span.string # get sentence like: "43K people like this"
-        num_likes = sentence.split(" ")[0]
-    except Exception as e:
-        num_likes = None
-    return parse_facebook_likes_number(num_likes)
+      if entity_id.startswith('nm'):
+          url = f"https://www.facebook.com/widgets/like.php?width=280&show_faces=1&layout=standard&href=http%3A%2F%2Fwww.imdb.com%2Fname%2F{entity_id}%2F&colorscheme=light"
+
+      elif entity_id.startswith('tt'):
+          url = f"https://www.facebook.com/widgets/like.php?width=280&show_faces=1&layout=standard&href=http%3A%2F%2Fwww.imdb.com%2Ftitle%2F{entity_id}%2F&colorscheme=light"
+
+      else:
+          url = None
+      time.sleep(random.uniform(0, 0.25)) # randomly snooze a time within [0, 0.4] second
+      try:
+          response = requests.get(url)
+          soup = BeautifulSoup(response.text, "lxml")
+          sentence = soup.find_all(id="u_0_2")[0].span.string # get sentence like: "43K people like this"
+          num_likes = sentence.split(" ")[0]
+      except Exception as e:
+          num_likes = None
+      return parse_facebook_likes_number(num_likes)
 
   def get_id_from_url(self, url):
-    if url is None:
-        return None
-    return url.split('/')[4]
+      return None if url is None else url.split('/')[4]
 
   def parse(self):
     movies_content = []
@@ -55,30 +52,39 @@ class ImdbMovieContent():
     return movies_content
 
   def get_awards(self, movie_link):
-    awards_url = movie_link + 'awards'
-    response = requests.get(awards_url)
-    bs = BeautifulSoup(response.text, 'lxml')
-    awards = bs.find_all('tr')
-    award_dict = []
-    for award in awards:
-        if 'rowspan' in award.find('td').attrs:
-            rowspan = int(award.find('td')['rowspan'])
-            if rowspan == 1:
-                award_dict.append({'category' : award.find('span', class_='award_category').text, 
-                                   'type' : award.find('b').text,
-                                   'award': award.find('td', class_='award_description').text.split('\n')[1].replace('            ', '')})
-            else:
-                index = awards.index(award)
-                dictt = {'category':award.find('span', class_='award_category').text, 
-                         'type' : award.find('b').text}
-                awards_ = []
-                for elem in awards[index:index+rowspan]:
-                    award_dict.append({'category':award.find('span', class_='award_category').text, 
-                                         'type' : award.find('b').text,
-                                        'award': elem.find('td', class_='award_description').text.split('\n')[1].replace('            ', '')})
-    award_nominated = [{k:v for k,v in award.items() if k != 'type'} for award in award_dict if award['type'] == 'Nominated']
-    award_won = [{k:v for k,v in award.items() if k != 'type'} for award in award_dict if award['type'] == 'Won']
-    return award_nominated, award_won
+      awards_url = f'{movie_link}awards'
+      response = requests.get(awards_url)
+      bs = BeautifulSoup(response.text, 'lxml')
+      awards = bs.find_all('tr')
+      award_dict = []
+      for award in awards:
+          if 'rowspan' in award.find('td').attrs:
+              rowspan = int(award.find('td')['rowspan'])
+              if rowspan == 1:
+                  award_dict.append({'category' : award.find('span', class_='award_category').text, 
+                                     'type' : award.find('b').text,
+                                     'award': award.find('td', class_='award_description').text.split('\n')[1].replace('            ', '')})
+              else:
+                  index = awards.index(award)
+                  dictt = {'category':award.find('span', class_='award_category').text, 
+                           'type' : award.find('b').text}
+                  awards_ = []
+                  award_dict.extend(
+                      {
+                          'category': award.find(
+                              'span', class_='award_category'
+                          ).text,
+                          'type': award.find('b').text,
+                          'award': elem.find('td', class_='award_description')
+                          .text.split('\n')[1]
+                          .replace('            ', ''),
+                      }
+                      for elem in awards[index : index + rowspan]
+                  )
+
+      award_nominated = [{k:v for k,v in award.items() if k != 'type'} for award in award_dict if award['type'] == 'Nominated']
+      award_won = [{k:v for k,v in award.items() if k != 'type'} for award in award_dict if award['type'] == 'Won']
+      return award_nominated, award_won
 
   def get_content(self, bs):
     movie = {}

@@ -50,7 +50,7 @@ def fbeta(y_true, y_pred, threshold_shift=0):
   return (beta_squared + 1) * (precision * recall) / (beta_squared * precision + recall + K.epsilon())
 
 def load_image(filename, resize=True, folder='train-jpg'):
-  img = mpimg.imread('./{}/{}.jpg'.format(folder, filename))
+  img = mpimg.imread(f'./{folder}/{filename}.jpg')
   if resize:
       img = cv2.resize(img, (picture_size, picture_size))
   return np.array(img)
@@ -123,8 +123,7 @@ def load_set():
   labels = list(df.tags)
 
   tags = set(np.concatenate(labels))
-  tag_list = list(tags)
-  tag_list.sort()
+  tag_list = sorted(tags)
   tag_columns = ['tag_' + t for t in tag_list]
   for t in tag_list:
       df['tag_' + t] = df['tags'].map(lambda x: 1 if t in x else 0)

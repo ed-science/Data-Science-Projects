@@ -45,9 +45,9 @@ class Back():
 
         ng, nf = np.count_nonzero(g), np.count_nonzero(f)
 
-        if ng < 0.90 * g.size and nf < 0.90 * f.size:
-            return g if ng > nf else f
         if ng < 0.90 * g.size:
+            if nf < 0.90 * f.size:
+                return g if ng > nf else f
             return g
         if nf < 0.90 * f.size:
             return f

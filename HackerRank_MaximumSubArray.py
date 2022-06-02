@@ -20,17 +20,17 @@ def max_subarray(A):
         max_so_far = max(max_so_far, max_ending_here)
     return max_so_far
 
-for i in range(2*t):
+for _ in range(2*t):
     k=int(input())
     arr = [int(arr_temp) for arr_temp in input().strip().split(' ')]
-    if(all(item>0 for item in arr)):
+    if (all(item>0 for item in arr)):
         print(sum(arr),sum(arr))
     elif(all(item<0 for item in arr)):
         print(max(arr),max(arr))
     else:
         c=0
-        for i in range(len(arr)):
-            if(c+arr[i]>c):
-                c+=arr[i]
+        for item_ in arr:
+            if c + item_ > c:
+                c += item_
         print(max_subarray(arr),c)
              

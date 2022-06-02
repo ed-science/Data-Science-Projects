@@ -30,10 +30,7 @@ def prediction(X_test, model, tag_columns, test_folder):
     r = r > 0.5
     table = []
     for row in r:
-        t = []
-        for b, v in zip(row, tag_columns):
-            if b:
-                t.append(v.replace('tag_', ''))
+        t = [v.replace('tag_', '') for b, v in zip(row, tag_columns) if b]
         table.append(' '.join(t))
     print('Prediction done !')
     return table
@@ -49,8 +46,5 @@ def launch(test_folder):
         np.save('table', table)
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        test_folder = sys.argv[1]
-    else:
-        test_folder='test-jpg'
+    test_folder = sys.argv[1] if len(sys.argv) > 1 else 'test-jpg'
     launch(test_folder)

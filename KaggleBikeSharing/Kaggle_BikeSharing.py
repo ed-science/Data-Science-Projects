@@ -48,9 +48,7 @@ class mean_30():
     def transfc(self, t):
         return self.err_hours_min(t)
     def vector_day(self):
-        k = []
-        for i in range(0,24):
-            k.append(i)
+        k = list(range(24))
         hour_day = pd.DataFrame()
         hour_day["A"] = k
         return hour_day["A"] 
@@ -95,9 +93,7 @@ class std_30():
     def transf_err2(self,t):
         return self.err_hours(j,t)
     def vector_day(self):
-        k = []
-        for i in range(0,24):
-            k.append(i)
+        k = list(range(24))
         hour_std = pd.DataFrame()
         hour_std["A"] = k
         return hour_std["A"] 
@@ -133,9 +129,7 @@ class month_30():
     def transfc(self, t):
         return self.err_hours_min(t)
     def vector_day(self):
-        k = []
-        for i in range(0,13):
-            k.append(i)
+        k = list(range(13))
         hour_day = pd.DataFrame()
         hour_day["A"] = k
         return hour_day["A"] 
@@ -248,11 +242,9 @@ linreg=linear_model.LinearRegression()
 linreg.fit(X_train,Y_train)
 tableau=[['Paramètre', 'Coefficient']] #liste pour voir les valeurs des coefficients
 col=list(train.columns.values)
-for i in range(7):
-    tableau.append([col[i],linreg.coef_[i]])
-
-print ("Training Score Regression Linéare : ", str(linreg.score(X_train,Y_train)))
-print ("Test Score Regression Linéare : " , str(linreg.score(X_test,Y_test)))
+tableau.extend([col[i],linreg.coef_[i]] for i in range(7))
+print("Training Score Regression Linéare : ", linreg.score(X_train,Y_train))
+print("Test Score Regression Linéare : ", linreg.score(X_test,Y_test))
 print ("Coefficients Regression Linéare :")
 print (tableau)
 
@@ -262,8 +254,8 @@ print (tableau)
 
 gbr = ensemble.GradientBoostingRegressor(n_estimators=2000)
 gbr.fit(X_train,Y_train)
-print ("Training Score GradientBoosting: ", str(gbr.score(X_train,Y_train)))
-print ("Test Score GradientBoosting: " , str(gbr.score(X_test,Y_test)))
+print("Training Score GradientBoosting: ", gbr.score(X_train,Y_train))
+print("Test Score GradientBoosting: ", gbr.score(X_test,Y_test))
 
 title = "Learning Curves (GradientBoosting)"
 estimator = ensemble.GradientBoostingRegressor(n_estimators=2000)
@@ -275,8 +267,8 @@ plt.show()
 ################### 
 svr=svm.SVR(kernel='linear')
 svr.fit(X_train,Y_train)
-print ("Training Score SVR: ", str(svr.score(X_train,Y_train)))
-print ("Test Score SVR : " , str(svr.score(X_test,Y_test)))
+print("Training Score SVR: ", svr.score(X_train,Y_train))
+print("Test Score SVR : ", svr.score(X_test,Y_test))
 
 ################### 
 ################### Random Forest Regression
@@ -284,8 +276,8 @@ print ("Test Score SVR : " , str(svr.score(X_test,Y_test)))
 
 rf=ensemble.RandomForestRegressor(n_estimators=30,oob_score=True) #30 arbres et OOB Estimation
 rf.fit(train,target)
-print ("Training Score RandomForest: ", str(rf.score(train,target)))
-print ("OOB Score RandomForest: " , str(rf.oob_score_))
+print("Training Score RandomForest: ", rf.score(train,target))
+print("OOB Score RandomForest: ", rf.oob_score_)
 
 ################### 
 ################### Améliorations

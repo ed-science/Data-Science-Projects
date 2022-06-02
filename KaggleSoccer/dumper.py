@@ -28,7 +28,7 @@ def get_team(request, link=None):
     if not link:
         team_searched = request
         team_searched = urllib.parse.quote(team_searched.encode('utf-8'))
-        search_link = "http://us.soccerway.com/search/teams/?q={}".format(team_searched)
+        search_link = f"http://us.soccerway.com/search/teams/?q={team_searched}"
         response = requests.get(search_link)
         bs = BeautifulSoup(response.text, 'lxml')
         results = bs.find("ul", class_='search-results')
@@ -49,8 +49,8 @@ def get_team(request, link=None):
 
 def get_games(team, nb_pages=12):
     games = []
+    link_base = 'http://us.soccerway.com/a/block_team_matches?block_id=page_team_1_block_team_matches_3&callback_params='
     for page_number in range(nb_pages):
-        link_base = 'http://us.soccerway.com/a/block_team_matches?block_id=page_team_1_block_team_matches_3&callback_params=' 
         link_ = urllib.parse.quote('{"page":0,"bookmaker_urls":[],"block_service_id":"team_matches_block_teammatches","team_id":%s,\
         "competition_id":0,"filter":"all","new_design":false}' % team['id_']) + '&action=changePage&params=' + urllib.parse.quote('{"page":-%s}' % (page_number))
         link = link_base + link_
@@ -61,8 +61,7 @@ def get_games(team, nb_pages=12):
 
         for kind in ['even', 'odd']:
             for elem in bs.find_all('tr', class_ = kind):
-                game = {}
-                game["date"] = elem.find('td', {'class': ["full-date"]}).text
+                game = {"date": elem.find('td', {'class': ["full-date"]}).text}
                 game["competition"] = elem.find('td', {'class': ["competition"]}).text
                 game["team_a"] = elem.find('td', class_='team-a').text
                 game["team_b"] = elem.find('td', class_='team-b').text
@@ -88,16 +87,16 @@ def get_games(team, nb_pages=12):
 def get_squad(team, season_path='./seasons_codes.json'):
     with open(season_path, 'r') as f:
         seasons = json.load(f)[team["country"]]
-    
+
     team['squad'] = {}
+    link_base = 'http://us.soccerway.com/a/block_team_squad?block_id=page_team_1_block_team_squad_3&callback_params='
     for k,v in seasons.items():
-        link_base = 'http://us.soccerway.com/a/block_team_squad?block_id=page_team_1_block_team_squad_3&callback_params='
         link_ = urllib.parse.quote('{"team_id":%s}' % team['id_']) + '&action=changeSquadSeason&params=' + urllib.parse.quote('{"season_id":%s}' % v)
         link = link_base + link_
         response = requests.get(link)
         test = json.loads(response.text)['commands'][0]['parameters']['content']
         bs = BeautifulSoup(test, 'lxml')
-        
+
         players = bs.find('tbody').find_all('tr')
         squad = [{
             k: convert_int(player.find('td', class_=k).text)
@@ -108,7 +107,7 @@ def get_squad(team, season_path='./seasons_codes.json'):
         try:
             coach = {'position': 'Coach', 'name':bs.find_all('tbody')[1].text}
             team['coach'][k] = coach
-        except: pass  
+        except: pass
     return team 
 
 if __name__ == '__main__':
@@ -130,5 +129,5 @@ if __name__ == '__main__':
         count += 1
     team = get_games(team)
     team = get_squad(team)
-    with open('./teams/%s.json' % team["name"].lower(), 'w') as f:
+    with open(f'./teams/{team["name"].lower()}.json', 'w') as f:
         json.dump(team, f)

@@ -18,14 +18,9 @@ def define_options(config_path):
     Threshold hard coded.
     :return: option for tfnet object
     """
-    options = {}
-    if len(get_available_gpus()) > 0 :
-        options["gpu"] = 1
-    else:
-        options["gpu"] = 0
-
-    model = config_path + 'cfg/yolo.cfg'
-    weights = config_path + 'yolo.weights'
+    options = {"gpu": 1 if len(get_available_gpus()) > 0 else 0}
+    model = f'{config_path}cfg/yolo.cfg'
+    weights = f'{config_path}yolo.weights'
     if os.path.exists(model):
         options['model'] = model
     else:
@@ -34,7 +29,7 @@ def define_options(config_path):
         options['load'] = weights
     else:
         print('No yolo weights, wget https://pjreddie.com/media/files/yolo.weights')
-    options['config'] = config_path + 'cfg/'
+    options['config'] = f'{config_path}cfg/'
     options["threshold"] = 0.1
     return options
 
@@ -70,7 +65,7 @@ def non_max_suppression_fast(boxes, probs, overlap_thresh=0.1, max_boxes=30):
 
     # calculate the areas
     area = (x2 - x1 + 1) * (y2 - y1 + 1)
-    
+
     # sort the bounding boxes 
     idxs = np.argsort(probs)
 
@@ -121,7 +116,7 @@ def predict_one(image, tfnet):
     # prediction
     result = tfnet.return_predict(image)
     # Separate each label to do non max suppresion
-    for label in set([k['label'] for k in result]):
+    for label in {k['label'] for k in result}:
         boxes = np.array([[k['topleft']['x'], k['topleft']['y'], k['bottomright']['x'], k['bottomright']['y']] for k in result
                           if k['label'] == label])
         probs = np.array([k['confidence'] for k in result if k['label'] == label])
@@ -142,10 +137,7 @@ def predict(folder, nb_items=None, config_path='../darkflow/'):
     :config_path: weights and model files path
     :return: list of icture with object bounding boxes, predictions, confidence scores
     """
-    images = [cv2.imread(f) for f in glob.glob(folder+'*')][:nb_items]
-    results = []
+    images = [cv2.imread(f) for f in glob.glob(f'{folder}*')][:nb_items]
     tfnet = TFNet(define_options(config_path))
-    for image in images:
-        results.append(predict_one(image, tfnet))
-    return results
+    return [predict_one(image, tfnet) for image in images]
 

@@ -33,25 +33,37 @@ def get_all_tweets_chrome(query):
     """
     driver = webdriver.Chrome("/usr/local/bin/chromedriver")
     driver.set_page_load_timeout(20)
-    driver.get("https://twitter.com/search?f=tweets&vertical=default&q={}".format(urllib.parse.quote(query)))
+    driver.get(
+        f"https://twitter.com/search?f=tweets&vertical=default&q={urllib.parse.quote(query)}"
+    )
+
 
     length = []
     try:
         while True:
             time.sleep(np.random.randint(50,100)*0.01)
-            tweets_found = driver.find_elements_by_class_name('tweet') 
+            tweets_found = driver.find_elements_by_class_name('tweet')
             driver.execute_script("return arguments[0].scrollIntoView();", tweets_found[::-1][0])
-            
+
             # Stop the loop while no more found tweets 
             length.append(len(tweets_found))
             if len(tweets_found) > 200 and (len(length) - len(set(length))) > 2:
-                print('%s tweets found at %s' % (len(tweets_found), datetime.datetime.now().strftime('%d/%m/%Y - %H:%M')))
+                print(
+                    f"{len(tweets_found)} tweets found at {datetime.datetime.now().strftime('%d/%m/%Y - %H:%M')}"
+                )
+
                 break
     except IndexError:
-        driver.save_screenshot('/Users/alexandreattia/Desktop/Work/Practice/HackerRankChallenge/TwitterParsing/screenshot_%s.png' % datetime.datetime.now().strftime('%d_%m_%Y_%H/%M'))
+        driver.save_screenshot(
+            f"/Users/alexandreattia/Desktop/Work/Practice/HackerRankChallenge/TwitterParsing/screenshot_{datetime.datetime.now().strftime('%d_%m_%Y_%H/%M')}.png"
+        )
+
         time.sleep(np.random.randint(50,100)*0.01)
-        tweets_found = driver.find_elements_by_class_name('tweet') 
-        print('%s tweets found at %s' % (len(tweets_found), datetime.datetime.now().strftime('%d/%m/%Y - %H:%M')))
+        tweets_found = driver.find_elements_by_class_name('tweet')
+        print(
+            f"{len(tweets_found)} tweets found at {datetime.datetime.now().strftime('%d/%m/%Y - %H:%M')}"
+        )
+
     except Exception as e:
         print(e)
         time.sleep(np.random.randint(50,100)*0.01)
@@ -66,7 +78,10 @@ def get_all_tweets_phantom(query):
     :return: all tweets on page as selenium objects
     """
     driver = webdriver.PhantomJS("/usr/local/bin/phantomjs")
-    driver.get("https://twitter.com/search?f=tweets&vertical=default&q={}".format(urllib.parse.quote(query)))
+    driver.get(
+        f"https://twitter.com/search?f=tweets&vertical=default&q={urllib.parse.quote(query)}"
+    )
+
     lastHeight = driver.execute_script("return document.body.scrollHeight")
     i = 0
     while True:
@@ -85,13 +100,12 @@ def format_tweets(driver):
     :param driver: Selenium driver (with tweets loaded)
     :return: well-formated tweets as a list of dictionnaries
     """
-    tweets_found = driver.find_elements_by_class_name('tweet') 
+    tweets_found = driver.find_elements_by_class_name('tweet')
     tweets = []
     for tweet in tweets_found:
-        tweet_dict = {}
         tweet = tweet.get_attribute('innerHTML')
         bs = BeautifulSoup(tweet.strip(), "lxml")
-        tweet_dict['username'] = bs.find('span', class_='username').text
+        tweet_dict = {'username': bs.find('span', class_='username').text}
         timestamp = float(bs.find('span', class_='_timestamp')['data-time'])
         tweet_dict['date'] = datetime.datetime.fromtimestamp(timestamp)
         tweet_dict['tweet_link'] = 'https://twitter.com' + bs.find('a', class_='js-permalink')['href']
@@ -122,11 +136,9 @@ def filter_tweets(tweets):
     # Keep non-downloaded tweets
     most_recent_file = sorted([datetime.datetime.fromtimestamp(os.path.getmtime(path)) 
                                for path in glob.glob("./downloaded_pics/*.jpg")], reverse=True)[0]
-    recent_seach_tweets = [tw for tw in unique_search_tweets if tw['date'] > most_recent_file]
-
     # Uncomment for testing new tweets
     # recent_seach_tweets = [tw for tw in unique_search_tweets if tw['date'] > datetime.datetime(2017, 7, 6, 13, 41, 48)]
-    return recent_seach_tweets
+    return [tw for tw in unique_search_tweets if tw['date'] > most_recent_file]
 
 def download_pictures(recent_seach_tweets):
     """
@@ -138,7 +150,7 @@ def download_pictures(recent_seach_tweets):
     for tw in recent_seach_tweets:
         img_url = tw['images'][0]
         filename = tw['text'][:tw['text'].index("#")-1].lower().replace(' ','_')
-        filename = "./downloaded_pics/%s.jpg" % filename
+        filename = f"./downloaded_pics/{filename}.jpg"
         urllib.request.urlretrieve(img_url, filename)
 
 def send_email(recent_seach_tweets):
@@ -166,7 +178,10 @@ def send_email(recent_seach_tweets):
     message = MIMEText(msg, 'html')
     message['From'] = formataddr((str(Header('Twitter Parser', 'utf-8')), C.my_email_address))
     message['To'] = C.dest
-    message['Subject'] = '%s new Machine Learning Flash Cards' % numbers[len(recent_seach_tweets)].title()
+    message[
+        'Subject'
+    ] = f'{numbers[len(recent_seach_tweets)].title()} new Machine Learning Flash Cards'
+
     msg_full = message.as_string()
 
     server = smtplib.SMTP('smtp.gmail.com:587')
@@ -174,7 +189,7 @@ def send_email(recent_seach_tweets):
     server.login(C.my_email_address, C.password)
     server.sendmail(C.my_email_address, C.dest, msg_full)
     server.quit()
-    print('%s - E-mail sent!' % datetime.datetime.now().strftime('%d/%m/%Y - %H:%M'))
+    print(f"{datetime.datetime.now().strftime('%d/%m/%Y - %H:%M')} - E-mail sent!")
 
 if __name__ == '__main__':
     # config file with mail content, email addresses
@@ -186,8 +201,11 @@ if __name__ == '__main__':
     while not internet_on():
         time.sleep(1)
         time_slept += 1
-        if time_slept > 15 : 
-            print('%s - No network connection' % datetime.datetime.now().strftime('%d/%m/%Y - %H:%M'))
+        if time_slept > 15: 
+            print(
+                f"{datetime.datetime.now().strftime('%d/%m/%Y - %H:%M')} - No network connection"
+            )
+
             sys.exit()
     # driver = get_all_tweets_chrome(query)
     driver = get_all_tweets_phantom(query)
@@ -197,6 +215,8 @@ if __name__ == '__main__':
         download_pictures(recent_seach_tweets)
         send_email(recent_seach_tweets)
     else:
-        print('%s - No picture to download' % datetime.datetime.now().strftime('%d/%m/%Y - %H:%M'))
+        print(
+            f"{datetime.datetime.now().strftime('%d/%m/%Y - %H:%M')} - No picture to download"
+        )
 
 

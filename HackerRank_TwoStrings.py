@@ -13,16 +13,16 @@
 
 n = int(input().strip())
 a = []
-for a_i in range(2*n):
-   a_t = [a_temp for a_temp in input().strip().split(' ')][0]
+for _ in range(2*n):
+   a_t = list(input().strip().split(' '))[0]
    a.append(a_t)
 
 for i in range(2*n):
-    if (i%2==0):
-        s1=set(a[i])
-        s2=set(a[i+1])
-        S=s1.intersection(s2) #intersection of subset -> return the same characters !!
-        if (len(S)==0):
-            print("NO")
-        else:
-            print("YES")
+   if (i%2==0):
+      s1=set(a[i])
+      s2=set(a[i+1])
+      S=s1.intersection(s2) #intersection of subset -> return the same characters !!
+      if not S:
+         print("NO")
+      else:
+         print("YES")
