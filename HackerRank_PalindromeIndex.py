@@ -12,24 +12,19 @@
 
 n = int(input().strip())
 a = []
-for a_i in range(n):
-   a_t = [a_temp for a_temp in input().strip().split(' ')][0]
+for _ in range(n):
+   a_t = list(input().strip().split(' '))[0]
    a.append(a_t)
         
 def isPal(s):
-    for i in range(int(len(s)/2)):
-        if s[i] != s[len(s)-i-1]:
-            return False
-    return True
+   return all(s[i] == s[len(s)-i-1] for i in range(len(s) // 2))
  
 def solve(s):
-    for i in range(int((len(s)+1)/2)):
-        if s[i] != s[len(s)-i-1]:
-            if isPal(s[:i]+s[i+1:]):
-                return i
-            else:
-                return len(s)-i-1
-    return -1
+   return next(
+       (i if isPal(s[:i] + s[i + 1:]) else len(s) - i - 1
+        for i in range(int((len(s) + 1) / 2)) if s[i] != s[len(s) - i - 1]),
+       -1,
+   )
 for i in range(n):
     x=a[i]
     print(solve(x))

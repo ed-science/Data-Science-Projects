@@ -13,7 +13,7 @@ import sys
 
 def get_picture():
     pic_folder = '/Users/alexandreattia/Desktop/Work/machine_learning_flashcards_v1.4/png_web/'
-    pics = glob.glob(pic_folder + '*')
+    pics = glob.glob(f'{pic_folder}*')
     pic = np.random.choice(pics)
     flashcard_title = pic.split('/')[7].replace('_web.png', '').replace('_', ' ')
     return pic, flashcard_title
@@ -26,7 +26,7 @@ def send_email(flashcard_title, pic):
     msgRoot = MIMEMultipart('related')
     msgRoot['From'] = formataddr((str(Header('ML Flashcards', 'utf-8')), C.my_email_address))
     msgRoot['To'] = C.dest
-    msgRoot['Subject'] = 'Today ML Flashcard : %s' % flashcard_title.title()
+    msgRoot['Subject'] = f'Today ML Flashcard : {flashcard_title.title()}'
     msgAlternative = MIMEMultipart('alternative')
     msgRoot.attach(msgAlternative)
 
@@ -35,24 +35,21 @@ def send_email(flashcard_title, pic):
     msg += C.flashcard
     message = MIMEText(msg, 'html')
     msgAlternative.attach(message)
-    
-    # Add picture to e-mail
-    fp = open(pic, 'rb')
-    msgImage = MIMEImage(fp.read())
-    fp.close()
 
+    with open(pic, 'rb') as fp:
+        msgImage = MIMEImage(fp.read())
     # Define the image's ID as referenced above
     msgImage.add_header('Content-ID', '<image1>')
     msgRoot.attach(msgImage)
 
     msg_full = msgRoot.as_string()
-    
+
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.starttls()
     server.login(C.my_email_address, C.password)
     server.sendmail(C.my_email_address, C.dest, msg_full)
     server.quit()
-    print('%s - E-mail sent!' % datetime.datetime.now().strftime('%d/%m/%Y - %H:%M'))
+    print(f"{datetime.datetime.now().strftime('%d/%m/%Y - %H:%M')} - E-mail sent!")
 
 if __name__ == '__main__':
     # config file with mail content, email addresses
@@ -62,8 +59,11 @@ if __name__ == '__main__':
     while not internet_on():
         time.sleep(1)
         time_slept += 1
-        if time_slept > 15 : 
-            print('%s - No network connection' % datetime.datetime.now().strftime('%d/%m/%Y - %H:%M'))
+        if time_slept > 15: 
+            print(
+                f"{datetime.datetime.now().strftime('%d/%m/%Y - %H:%M')} - No network connection"
+            )
+
             sys.exit()
     p, fc = get_picture()
     send_email(fc, p)

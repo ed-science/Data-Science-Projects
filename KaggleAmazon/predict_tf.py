@@ -22,11 +22,11 @@ def load_set():
     pictures = []
     tags = []
     for pic in np.random.choice(df.index, len(df)):
-        img = cv2.imread('./train-jpg/{}.jpg'.format(pic)) / 255.
+        img = cv2.imread(f'./train-jpg/{pic}.jpg') / 255.
         img = cv2.resize(img, (picture_size, picture_size))
         tag = np.zeros(len(labels))
         for t in df.loc[pic].tags:
-            tag[reverse_mapping[t]] = 1 
+            tag[reverse_mapping[t]] = 1
         pictures.append(img)
         tags.append(tag)
 
@@ -77,7 +77,7 @@ def model(data):
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_2) + b_2)
     h_pool2 = max_pool(h_conv2, ksize=(2, 2), stride=(2, 2))
     # reshape tensor into a batch of vectors
-    pool_flat = tf.reshape(h_pool2, [-1, int(picture_size / 4) * int(picture_size / 4) * 64])
+    pool_flat = tf.reshape(h_pool2, [-1, int(picture_size / 4)**2 * 64])
 
     # Full connected layer with 1024 neurons.
     fc = tf.nn.relu(tf.matmul(pool_flat, W_fc) + b_fc)
@@ -101,7 +101,7 @@ if __name__ == "__main__":
         b_1 = bias_variable([32])
         W_2 = weight_variable([5, 5, 32, 128])
         b_2 = bias_variable([64])
-        W_fc = weight_variable([int(picture_size / 4) * int(picture_size / 4) * 64, 1024])
+        W_fc = weight_variable([int(picture_size / 4)**2 * 64, 1024])
         b_fc = bias_variable([1024])
         W_logits = weight_variable([1024, len(labels)])
         b_logits = bias_variable([len(labels)])
